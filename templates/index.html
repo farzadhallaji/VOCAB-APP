@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Selection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript for handling move button and dynamic content update -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.move-button').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const accordionItem = this.closest('.accordion-item');
+                    const formData = new FormData(this.closest('form'));
+
+                    // Make the POST request via fetch to move the file
+                    fetch(this.closest('form').action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Remove the accordion item on success
+                            accordionItem.remove();
+
+                            // Check if there are any accordion items left
+                            if (document.querySelectorAll('.accordion-item').length === 0) {
+                                // Automatically trigger the form submission if no divs are left
+                                const form = document.querySelector('form');
+                                form.submit();
+                            }
+                        } else {
+                            console.error('Error moving the file.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                    });
+                });
+            });
+        });
+    </script>
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .form-check-label {
+            color: #ffffff;
+        }
+
+        .accordion-button {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+
+        .accordion-button:not(.collapsed) {
+            background-color: #495057;
+        }
+
+        .accordion-body {
+            background-color: #343a40;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        .accordion-item {
+            background-color: #343a40;
+            border: 1px solid #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <form method="POST">
+            <!-- Main folders -->
+            <div class="d-flex flex-row align-items-center">
+                {% for folder in main_folders %}
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="radio" name="main_folder" id="main-{{ folder }}" value="{{ folder }}"
+                               {% if folder == selected_main_folder %}checked{% endif %}
+                               onchange="this.form.submit()">
+                        <label class="form-check-label" for="main-{{ folder }}">
+                            {{ folder }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Sub folders -->
+            <div class="d-flex flex-row align-items-center mt-2">
+                {% for folder in sub_folders %}
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="radio" name="sub_folder" id="sub-{{ folder }}" value="{{ folder }}"
+                               {% if folder == selected_sub_folder %}checked{% endif %}>
+                        <label class="form-check-label" for="sub-{{ folder }}">
+                            {{ folder }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Submit</button>
+        </form>
+
+        <!-- Accordion to display file content and action buttons -->
+        <div class="mt-3">
+            {% for filename, content in files_content.items() %}
+                <div class="accordion mb-2" id="accordionExample">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                {{ filename }}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#accordionExample">
+                            <div class="accordion-body d-flex justify-content-between align-items-start">
+                                <!-- File Content on the left -->
+                                <div class="file-content flex-grow-1 me-3">
+                                    {{ content | safe }}
+                                </div>
+                    
+                                <!-- Buttons on the right, with margin and pushed down -->
+                                <div class="btn-group-vertical align-self-end" style="margin-top: auto;">
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="known">
+                                        <button type="submit" class="btn btn-success mb-2 move-button">Known</button>
+                                    </form>
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="pronunciation">
+                                        <button type="submit" class="btn" style="background-color: #66bb6a; color: white; margin-bottom: 10px;">Pronunciation</button>
+                                    </form>
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="guessable">
+                                        <button type="submit" class="btn btn-primary mb-2 move-button">Guessable</button>
+                                    </form>
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="unknown">
+                                        <button type="submit" class="btn btn-warning text-dark mb-2 move-button">Unknown</button>
+                                    </form>
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="unfamiliar">
+                                        <button type="submit" class="btn btn-orange" style="background-color: #ffa500; color: white; margin-bottom: 10px;">Unfamiliar</button>
+                                    </form>
+                                    <form method="POST" action="/move-file">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="source_main_folder" value="{{ selected_main_folder }}">
+                                        <input type="hidden" name="source_sub_folder" value="{{ selected_sub_folder }}">
+                                        <input type="hidden" name="target_folder" value="not-reviewed">
+                                        <button type="submit" class="btn btn-danger mb-2 move-button">Not Reviewed</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
