@@ -5,4 +5,4 @@
 - Phone
 ![phone](https://github.com/user-attachments/assets/f62cb0f3-a347-42f9-a3a5-976082296bb1)
 
-Images are for older version of Anki Add-On
+These images are for an older version of the Anki add-on.
