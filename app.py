@@ -7,7 +7,7 @@ import shutil
 app = Flask(__name__)
 
 # Define the number of HTML files to show per page
-WORD_PER_PAGE = 2
+WORD_PER_PAGE = 23
 
 # Directories for each type
 directories = {
@@ -61,6 +61,7 @@ def move_file():
         os.makedirs(target, exist_ok=True)
         target_path = os.path.join(target, filename)
         shutil.move(source_path, target_path)
+        # Return success message in JSON format
         return {"status": "success"}, 200
 
     return {"status": "error", "message": "File not found"}, 404
@@ -75,4 +76,5 @@ def serve_file(filename):
     return send_from_directory(directory, filename, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)  # or any other port you prefer

@@ -12,28 +12,30 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.move-button').forEach(button => {
                 button.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    const accordionItem = this.closest('.accordion-item');
+                    event.preventDefault(); // Prevent default form submission
+                    const accordionItem = this.closest('.accordion-item'); 
                     const formData = new FormData(this.closest('form'));
-
+    
                     // Make the POST request via fetch to move the file
                     fetch(this.closest('form').action, {
                         method: 'POST',
                         body: formData
                     })
-                    .then(response => {
-                        if (response.ok) {
-                            // Remove the accordion item on success
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            // Remove the accordion item from the DOM on successful file move
                             accordionItem.remove();
-
+    
                             // Check if there are any accordion items left
                             if (document.querySelectorAll('.accordion-item').length === 0) {
-                                // Automatically trigger the form submission if no divs are left
-                                const form = document.querySelector('form');
-                                form.submit();
+                                // Optionally, display a message or perform another action when all items are removed
+                                const message = document.createElement('div');
+                                message.innerHTML = '<p>All files have been moved.</p>';
+                                document.querySelector('.container').appendChild(message);
                             }
                         } else {
-                            console.error('Error moving the file.');
+                            console.error('Error moving the file: ' + data.message);
                         }
                     })
                     .catch(error => {
@@ -43,6 +45,7 @@
             });
         });
     </script>
+    
 
     <style>
         body {
