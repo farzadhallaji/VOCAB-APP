@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os
 from markupsafe import Markup
@@ -32,6 +32,7 @@ def list_folders():
     main_folder_path = directories[selected_main_folder]
     main_folders = list(directories.keys())
     sub_folders = [f.name for f in os.scandir(main_folder_path) if f.is_dir()]
+    sub_folders = sorted(sub_folders)
 
     files_content = {}
     if request.method == 'POST' and selected_sub_folder:
@@ -62,10 +63,9 @@ def move_file():
         target_path = os.path.join(target, filename)
         shutil.move(source_path, target_path)
         # Return success message in JSON format
-        return {"status": "success"}, 200
-
-    return {"status": "error", "message": "File not found"}, 404
-
+        return jsonify({"status": "success"}), 200
+    
+    return jsonify({"status": "error", "message": "File not found"}), 404
 
 @app.route('/files/<path:filename>')
 def serve_file(filename):
